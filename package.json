@@ -14,10 +14,14 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/node": "^13.11.1",
+    "@typescript-eslint/eslint-plugin": "^5.26.0",
+    "@typescript-eslint/parser": "^5.26.0",
     "eslint": "^7.28.0",
     "jest": "^25.2.4",
     "ts-jest": "^25.3.0",
     "typescript": "^3.8.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "prettier": "^2.6.2"
+  }
 }

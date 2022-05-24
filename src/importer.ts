@@ -1,14 +1,9 @@
-import { CSVParser } from './infrastructure/csvParser';
+import { CSVReader } from './infrastructure/csvReader';
 import { InvoiceRowService } from './domain/services/invoiceRow.service';
-import * as path from 'path';
 
 export class Importer {
   async import(filePath: string): Promise<any> {
-    console.log(filePath);
-
-    const csvParser = new CSVParser();
-    const service = new InvoiceRowService(csvParser);
-
-    return service.parse(path.resolve(__dirname, `../files/${filePath}`));
+    const service = new InvoiceRowService(new CSVReader());
+    return service.import(filePath);
   }
 }

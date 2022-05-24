@@ -1,105 +1,120 @@
-import { ICSVParser } from '../ports/csvParser';
+import { ICSVReader } from '../ports/csvReader';
 import { InvoiceRow, Status } from '../models/invoiceRow';
 import { RowError, RowErrorLine } from '../models/rowError';
+import * as path from 'path';
+
+type ImportResult = {
+  ok: InvoiceRow[];
+  ko: RowError[];
+};
 
 export class InvoiceRowService {
-
-  constructor(private csvParser: ICSVParser) {
-    this.csvParser = csvParser;
+  constructor(private csvReader: ICSVReader) {
+    this.csvReader = csvReader;
   }
 
-  parse(filePath: string): {ok: InvoiceRow[], ko: RowError[]}{
-    const separator = ',';
-    const data: string[][] = this.csvParser.parse(filePath, separator);
+  import(filePath: string): ImportResult {
+    const separator = ';';
+    const data: string[][] = this.csvReader.read(
+      path.resolve(__dirname, `../../../files/${filePath}`),
+      separator,
+    );
 
-    const result: {ok: InvoiceRow[], ko: RowError[]} = {
+    const result: ImportResult = {
       ok: [],
-      ko: []
+      ko: [],
     };
 
-    for(let i = 1; i < data.length; i++) {
-      const row: string[] = data[i];
+    for (let i = 1; i < data.length; i++) {
+      const row: string[] = this.sanitizeRow(data[i]);
 
-      const errorMessages = this.isValid(row)
+      const errorMessages = this.isValid(row);
 
-      if(errorMessages.length > 0) {
+      if (errorMessages.length > 0) {
         result.ko.push({
           line: i,
-          errors: errorMessages
+          errors: errorMessages,
         });
         continue;
       }
 
-      result.ok.push({
-        code: row[0],
-        issuedDate: row[1],
-        ownerName: row[2],
-        contactName: row[3],
-        subtotal: parseFloat(row[4]),
-        taxes: parseFloat(row[5]),
-        total: parseFloat(row[6]),
-        status: row[7] as Status
-      });
+      const [
+        code,
+        issuedDate,
+        ownerName,
+        contactName,
+        subtotal,
+        taxes,
+        total,
+        status,
+      ] = row;
 
+      result.ok.push({
+        code: code,
+        issuedDate: issuedDate,
+        ownerName: ownerName,
+        contactName: contactName,
+        subtotal: parseFloat(subtotal),
+        taxes: parseFloat(taxes),
+        total: parseFloat(total),
+        status: status as Status,
+      });
     }
 
     return result;
+  }
 
+  private sanitizeRow(row: string[]): string[] {
+    return row.map((cell) => cell.trim());
   }
 
   private isValid(row: string[]): RowErrorLine[] {
     const result: RowErrorLine[] = [];
 
-    if(!row[0]) {
+    const [code, , ownerName, , subtotal, taxes, total, status] = row;
+
+    if (!code) {
       result.push({
         property: 'code',
-        message: 'required'
+        message: 'required',
       });
     }
 
-    if(!row[2]) {
+    if (!ownerName) {
       result.push({
         property: 'ownerName',
-        message: 'required'
+        message: 'required',
       });
     }
 
-    if(row[7] === 'bad status') {
+    if (status === 'bad status') {
       result.push({
         property: 'status',
-        message: 'invalid'
+        message: 'invalid',
       });
     }
 
-    try {
-      parseFloat(row[4])
-    } catch (e) {
+    if (isNaN(parseFloat(subtotal))) {
       result.push({
         property: 'subtotal',
-        message: 'invalid'
+        message: 'invalid',
       });
     }
 
-    try {
-      parseFloat(row[5])
-    } catch (e) {
+    if (isNaN(parseFloat(taxes))) {
       result.push({
         property: 'taxes',
-        message: 'invalid'
+        message: 'invalid',
       });
     }
 
-    try {
-      parseFloat(row[6])
-    } catch (e) {
+    if (isNaN(parseFloat(total))) {
       result.push({
         property: 'total',
-        message: 'invalid'
+        message: 'invalid',
       });
     }
 
     return result;
   }
-
-
 }
