@@ -107,7 +107,7 @@ describe('InvoiceRowService', () => {
     });
   });
 
-  it('should throw error when fails reading file', () => {
+  it('should throw error when fails reading file', async () => {
     MOCK_READ_FN.mockImplementation(() => {
       throw new Error('Error reading file');
     });
@@ -115,9 +115,9 @@ describe('InvoiceRowService', () => {
     const invoiceRowService = new InvoiceRowService(new CSVReader());
 
     try {
-      invoiceRowService.import('test.csv');
+      await invoiceRowService.import('test.csv');
     } catch (error) {
-      expect(error.message).toEqual('Error reading file');
+      expect(error).toEqual('Error reading file test.csv - Error reading file');
     }
   });
 });
