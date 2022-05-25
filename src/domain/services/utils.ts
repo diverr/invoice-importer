@@ -1,11 +1,11 @@
-import { RowErrorLine } from '../models/rowError';
+import { ErrorRowItem } from '../models/errorRowItem';
 
 const sanitizeRow = (row: string[]): string[] => {
   return row.map((cell) => cell.trim());
 };
 
-const isValidRow = (row: string[]): RowErrorLine[] => {
-  const result: RowErrorLine[] = [];
+const isValidRow = (row: string[]): ErrorRowItem[] => {
+  const result: ErrorRowItem[] = [];
 
   const [code, , ownerName, , subtotal, taxes, total, status] = row;
 

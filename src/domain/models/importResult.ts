@@ -1,7 +1,7 @@
 import { InvoiceRow } from './invoiceRow';
-import { RowError } from './rowError';
+import { ErrorRow } from './errorRow';
 
 export type ImportResult = {
   ok: InvoiceRow[];
-  ko: RowError[];
+  ko: ErrorRow[];
 };
