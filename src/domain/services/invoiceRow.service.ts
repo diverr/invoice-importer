@@ -1,8 +1,8 @@
 import { ICSVReader } from '../ports/csvReader';
 import { Status } from '../models/invoiceRow';
-import * as path from 'path';
 import { ImportResult } from '../models/importResult';
 import { isValidRow, sanitizeRow } from './utils';
+import { config } from '../config/config';
 
 export class InvoiceRowService {
   constructor(private csvReader: ICSVReader) {
@@ -17,12 +17,10 @@ export class InvoiceRowService {
     let data: string[][];
 
     try {
-      data = await this.csvReader.read(
-        path.resolve(__dirname, `../../../files/${filePath}`),
-        separator,
-      );
+      const filesPath = config.filesPath;
+      data = await this.csvReader.read(`${filesPath}/${filePath}`, separator);
     } catch (e) {
-      throw `Error reading file ${filePath}`;
+      throw `Error reading file ${filePath} - ${e.message}`;
     }
 
     const result: ImportResult = {
@@ -77,9 +75,6 @@ export class InvoiceRowService {
             },
           ],
         });
-
-        // log error or whatever appropriate
-        console.error(`Error parsing row ${i}`, e);
       }
     }
 

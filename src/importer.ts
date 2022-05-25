@@ -6,10 +6,11 @@ export class Importer {
     const service = new InvoiceRowService(new CSVReader());
 
     try {
-      return service.import(filePath);
+      return await service.import(filePath);
     } catch (error) {
       // do something with error, post to sentry, etc...
-      console.error(error);
+
+      throw error;
     }
   }
 }
