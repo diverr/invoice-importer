@@ -55,7 +55,7 @@ describe('InvoiceRowService', () => {
     expect(spySanitizeRow).toHaveBeenCalledTimes(1);
     expect(spyIsValidRow).toHaveBeenCalledTimes(1);
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       ok: [
         {
           code: 'F001',
@@ -105,5 +105,19 @@ describe('InvoiceRowService', () => {
         },
       ],
     });
+  });
+
+  it('should throw error when fails reading file', () => {
+    MOCK_READ_FN.mockImplementation(() => {
+      throw new Error('Error reading file');
+    });
+
+    const invoiceRowService = new InvoiceRowService(new CSVReader());
+
+    try {
+      invoiceRowService.import('test.csv');
+    } catch (error) {
+      expect(error.message).toEqual('Error reading file');
+    }
   });
 });

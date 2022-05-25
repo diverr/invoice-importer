@@ -1,7 +1,7 @@
 import { ICSVReader } from '../ports/csvReader';
 import { Status } from '../models/invoiceRow';
 import * as path from 'path';
-import { ImportResult } from './types';
+import { ImportResult } from '../models/importResult';
 import { isValidRow, sanitizeRow } from './utils';
 
 export class InvoiceRowService {
@@ -11,55 +11,76 @@ export class InvoiceRowService {
 
   async import(
     filePath: string,
-    isHeader = true,
+    withHeader = true,
     separator = ';',
   ): Promise<ImportResult> {
-    const data: string[][] = await this.csvReader.read(
-      path.resolve(__dirname, `../../../files/${filePath}`),
-      separator,
-    );
+    let data: string[][];
+
+    try {
+      data = await this.csvReader.read(
+        path.resolve(__dirname, `../../../files/${filePath}`),
+        separator,
+      );
+    } catch (e) {
+      throw `Error reading file ${filePath}`;
+    }
 
     const result: ImportResult = {
       ok: [],
       ko: [],
     };
 
-    const startRow = isHeader ? 1 : 0;
+    const startRow = withHeader ? 1 : 0;
 
     for (let i = startRow; i < data.length; i++) {
-      const row: string[] = sanitizeRow(data[i]);
+      try {
+        const row: string[] = sanitizeRow(data[i]);
 
-      const errorMessages = isValidRow(row);
+        const errorMessages = isValidRow(row);
 
-      if (errorMessages.length > 0) {
+        if (errorMessages.length > 0) {
+          result.ko.push({
+            line: i,
+            errors: errorMessages,
+          });
+          continue;
+        }
+
+        const [
+          code,
+          issuedDate,
+          ownerName,
+          contactName,
+          subtotal,
+          taxes,
+          total,
+          status,
+        ] = row;
+
+        result.ok.push({
+          code: code,
+          issuedDate: issuedDate,
+          ownerName: ownerName,
+          contactName: contactName,
+          subtotal: parseFloat(subtotal),
+          taxes: parseFloat(taxes),
+          total: parseFloat(total),
+          status: status as Status,
+        });
+      } catch (e) {
         result.ko.push({
           line: i,
-          errors: errorMessages,
+          errors: [
+            {
+              property: '',
+              message: `Error parsing row - ${e.message}`,
+            },
+          ],
         });
-        continue;
+
+        // log error or whatever appropriate
+        console.error(`Error parsing row ${i}`, e);
       }
-
-      const [
-        code,
-        issuedDate,
-        ownerName,
-        contactName,
-        subtotal,
-        taxes,
-        total,
-        status,
-      ] = row;
-
-      result.ok.push({
-        code: code,
-        issuedDate: issuedDate,
-        ownerName: ownerName,
-        contactName: contactName,
-        subtotal: parseFloat(subtotal),
-        taxes: parseFloat(taxes),
-        total: parseFloat(total),
-        status: status as Status,
-      });
     }
 
     return Promise.resolve(result);
