@@ -8,7 +8,7 @@ export class Importer {
     try {
       return await service.import(filePath);
     } catch (error) {
-      // do something with error, post to sentry, etc...
+      // do something with error, loggers, post to sentry, etc...
 
       throw error;
     }
