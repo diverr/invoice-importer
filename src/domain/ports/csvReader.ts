@@ -1,3 +1,3 @@
 export interface ICSVReader {
-  read(filePath: string, separator?: string): string[][];
+  read(filePath: string, separator?: string): Promise<string[][]>;
 }

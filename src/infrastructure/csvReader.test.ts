@@ -1,25 +1,49 @@
-const MOCK_READ_FILE_SYNC = jest.fn();
+const MOCK_READ_FILE_SYNC_FN = jest.fn();
 
 jest.mock('fs', () => ({
-  readFileSync: MOCK_READ_FILE_SYNC,
+  readFileSync: MOCK_READ_FILE_SYNC_FN,
 }));
 
 import { CSVReader } from './csvReader';
 
 describe('CSVReader', () => {
-  it('should read csv file', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should read csv file', async () => {
     const csvReader = new CSVReader();
     const csvFile = 'test.csv';
-    const csvFileContent = 'row1_1;row1_2;row1_3\nrow2_1;row2_2;row2_3';
+    const csvFileContent =
+      'Invoice Code;Issued Date;Owner Name;Contact Name;Subtotal;Taxes;Total;Status\n' +
+      'F001;2021-04-17;John Doe S.L.;Jane Roe;100.00;21.00;121.00;issued';
 
-    MOCK_READ_FILE_SYNC.mockReturnValue(csvFileContent);
+    MOCK_READ_FILE_SYNC_FN.mockReturnValue(csvFileContent);
 
-    const result = csvReader.read(csvFile);
+    const result = await csvReader.read(csvFile);
 
-    expect(MOCK_READ_FILE_SYNC).toHaveBeenCalledWith(csvFile, 'utf8');
+    expect(MOCK_READ_FILE_SYNC_FN).toHaveBeenCalledWith(csvFile, 'utf8');
     expect(result).toEqual([
-      ['row1_1', 'row1_2', 'row1_3'],
-      ['row2_1', 'row2_2', 'row2_3'],
+      [
+        'Invoice Code',
+        'Issued Date',
+        'Owner Name',
+        'Contact Name',
+        'Subtotal',
+        'Taxes',
+        'Total',
+        'Status',
+      ],
+      [
+        'F001',
+        '2021-04-17',
+        'John Doe S.L.',
+        'Jane Roe',
+        '100.00',
+        '21.00',
+        '121.00',
+        'issued',
+      ],
     ]);
   });
 });
